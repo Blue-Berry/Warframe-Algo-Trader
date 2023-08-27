@@ -309,13 +309,14 @@ def compareLiveOrdersWhenBuying(item, liveOrderDF, itemStats, currentOrders, myB
             if (myPlatPrice != (postPrice)):
                 #need to edit such that updated listing does not exceed budget
                 logging.debug(f"AUTOMATICALLY UPDATED {orderType.upper()} ORDER FROM {myPlatPrice} TO {postPrice}")
-                updateListing(myOrderID, str(postPrice), 1, str(visibility), item, "buy")
+                updateListing(myOrderID, str(postPrice+1), 1, str(visibility), item, "buy")
                 myBuyOrdersDF.loc[myBuyOrdersDF["url_name"] == item,"platinum"] = postPrice
                 myBuyOrdersDF.loc[myBuyOrdersDF["url_name"] == item,"potential_profit"] = myBuyOrdersDF.loc[myBuyOrdersDF["url_name"] == item]["potential_profit"] - (postPrice - myPlatPrice)
                 return myBuyOrdersDF
             else:
-                updateListing(myOrderID, str(postPrice), 1, str(visibility), item, "buy")
+                updateListing(myOrderID, str(postPrice+1), 1, str(visibility), item, "buy")
                 logging.debug(f"Your current (possibly hidden) posting on this item for {myPlatPrice} plat is a good one. Recommend to make visible.")
+                logging.debug(f"Updated order")
                 return
         else:
             # if limit_max_plat_listings(myBuyOrdersDF, postPrice):

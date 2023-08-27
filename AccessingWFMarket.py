@@ -20,7 +20,7 @@ class WarframeApi:
             'User-Agent': 'Warframe Algo Trader/1.2.9',
         }
         self.lastRequestTime = 0
-        self.timeBetweenRequests = 3
+        self.timeBetweenRequests = 1
 
     def waitUntilDelayEnds(self):
         if (time.time() - self.lastRequestTime) < self.timeBetweenRequests:
