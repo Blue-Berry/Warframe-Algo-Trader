@@ -304,7 +304,7 @@ def compareLiveOrdersWhenBuying(item, liveOrderDF, itemStats, currentOrders, myB
             deleteOrder(myOrderID)
         return
     
-    if (closedAvgMetric >= 30 and priceRange >= 15) or priceRange >= 21:
+    if (closedAvgMetric >= 30 and priceRange >= 15) or priceRange >= 19:
         if myOrderActive:
             if (myPlatPrice != (postPrice)):
                 #need to edit such that updated listing does not exceed budget

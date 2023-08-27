@@ -9,7 +9,7 @@
     "priceShiftThreshold" : -1,
     "avgPriceCap" : 600,
     "maxTotalPlatCap": 100000,
-    "volumeThreshold" : 15,
-    "rangeThreshold" : 10,
+    "volumeThreshold" : 9,
+    "rangeThreshold" : 8,
     "pingOnNotif" : true
 }

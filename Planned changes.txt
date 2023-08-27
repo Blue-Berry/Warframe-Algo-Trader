@@ -1,0 +1,9 @@
+Initial problem is there is too much competition possible solutions:
+1. Update bids more often
+    - run a seperate loop that constantly updates orders
+    - run the loop that adds items faster
+    - check if its retaining connection rather than reconnecting every time
+2. bid on more items
+    - increase max possible plat cap
+3. Bid on items that wouldn't be bid on by default (ie out of range for bidding etc)
+    - play with the spread/liquidity values
