@@ -10,7 +10,8 @@ class WarframeApi:
     def __init__(self):
         self.t0 = time.time()
         self.jwt_token = config.jwt_token
-        self.headers = {
+        self.session = requests.Session()  # Use a Session object for connection pooling
+        self.session.headers = {
             "Content-Type": "application/json; utf-8",
             "Accept": "application/json",
             "auth_type": "header",
@@ -20,40 +21,90 @@ class WarframeApi:
             'User-Agent': 'Warframe Algo Trader/1.2.9',
         }
         self.lastRequestTime = 0
-        self.timeBetweenRequests = 1
+        self.timeBetweenRequests = 0.1
 
     def waitUntilDelayEnds(self):
         if (time.time() - self.lastRequestTime) < self.timeBetweenRequests:
             time.sleep(self.lastRequestTime - time.time() + self.timeBetweenRequests)
         
-    def get(self, link, headers=None):
-        t0 = time.time()
-        self.waitUntilDelayEnds()
-        self.lastRequestTime = time.time()
-        r = requests.get(link, headers=self.headers)
-        #print(time.time()-t0)
-        return r
-    def post(self, link, json, headers=None):
-        t0 = time.time()
-        self.waitUntilDelayEnds()
-        self.lastRequestTime = time.time()
-        r = requests.post(link, headers=self.headers, json=json)
-        #print(time.time()-t0)
-        return r
-    def delete(self, link, headers=None):
-        t0 = time.time()
-        self.waitUntilDelayEnds()
-        self.lastRequestTime = time.time()
-        r = requests.delete(link, headers=self.headers)
-        #print(time.time()-t0)
-        return r
-    def put(self, link, json, headers=None):
-        t0 = time.time()
-        self.waitUntilDelayEnds()
-        self.lastRequestTime = time.time()
-        r = requests.put(link, headers=self.headers, json=json)
-        #print(time.time()-t0)
-        return r
+    def perform_request(self, method, link, json=None):
+        # t0 = time.time()
+        # self.waitUntilDelayEnds()
+        # self.lastRequestTime = time.time()
+
+        if method == 'GET':
+            response = self.session.get(link)
+        elif method == 'POST':
+            response = self.session.post(link, json=json)
+        elif method == 'DELETE':
+            response = self.session.delete(link)
+        elif method == 'PUT':
+            response = self.session.put(link, json=json)
+        else:
+            raise ValueError("Invalid HTTP method")
+
+        return response
+
+    def get(self, link):
+        return self.perform_request('GET', link)
+
+    def post(self, link, json):
+        return self.perform_request('POST', link, json)
+
+    def delete(self, link):
+        return self.perform_request('DELETE', link)
+
+    def put(self, link, json):
+        return self.perform_request('PUT', link, json)
+
+# class WarframeApi:
+#     def __init__(self):
+#         self.t0 = time.time()
+#         self.jwt_token = config.jwt_token
+#         self.headers = {
+#             "Content-Type": "application/json; utf-8",
+#             "Accept": "application/json",
+#             "auth_type": "header",
+#             "platform": config.platform,
+#             "language": "en",
+#             "Authorization": self.jwt_token,
+#             'User-Agent': 'Warframe Algo Trader/1.2.9',
+#         }
+#         self.lastRequestTime = 0
+#         self.timeBetweenRequests = 0.1
+
+#     def waitUntilDelayEnds(self):
+#         if (time.time() - self.lastRequestTime) < self.timeBetweenRequests:
+#             time.sleep(self.lastRequestTime - time.time() + self.timeBetweenRequests)
+        
+#     def get(self, link, headers=None):
+#         t0 = time.time()
+#         self.waitUntilDelayEnds()
+#         self.lastRequestTime = time.time()
+#         r = requests.get(link, headers=self.headers)
+#         #print(time.time()-t0)
+#         return r
+#     def post(self, link, json, headers=None):
+#         t0 = time.time()
+#         self.waitUntilDelayEnds()
+#         self.lastRequestTime = time.time()
+#         r = requests.post(link, headers=self.headers, json=json)
+#         #print(time.time()-t0)
+#         return r
+#     def delete(self, link, headers=None):
+#         t0 = time.time()
+#         self.waitUntilDelayEnds()
+#         self.lastRequestTime = time.time()
+#         r = requests.delete(link, headers=self.headers)
+#         #print(time.time()-t0)
+#         return r
+#     def put(self, link, json, headers=None):
+#         t0 = time.time()
+#         self.waitUntilDelayEnds()
+#         self.lastRequestTime = time.time()
+#         r = requests.put(link, headers=self.headers, json=json)
+#         #print(time.time()-t0)
+#         return r
         
 
 WFM_API = "https://api.warframe.market/v1"

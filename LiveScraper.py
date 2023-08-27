@@ -438,7 +438,7 @@ interestingItems = list(buySellOverlap.index)
 
 try:
     while config.getConfigStatus("runningLiveScraper"):
-        
+        logging.debug('Loop start')
 
         con = sqlite3.connect('inventory.db')
 
@@ -446,7 +446,7 @@ try:
         con.close()
         inventory = inventory[inventory.get("number") > 0]
         inventoryNames = list(inventory["name"].unique())
-
+        logging.debug("Inventory: \n".join(inventoryNames))
         buySellOverlap = getBuySellOverlap()
         interestingItems = list(buySellOverlap.index)
 
