@@ -7,3 +7,9 @@ Initial problem is there is too much competition possible solutions:
     - increase max possible plat cap
 3. Bid on items that wouldn't be bid on by default (ie out of range for bidding etc)
     - play with the spread/liquidity values
+
+Optomisation:
+ * Main loop Optomisation
+1. The loop reads from the `inventory` table twice, which could be reduced to a single read
+2. The `interestingItems` list could be constructed less often.
+3. The `getFilteredDF` function is called within the loop, which could be a bottleneck if it's a slow operation. If possible, it might be worth investigating ways to optimize this function or reduce the number of times it's called.
