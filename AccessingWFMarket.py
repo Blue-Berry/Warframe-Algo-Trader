@@ -21,41 +21,35 @@ class WarframeApi:
             'User-Agent': 'Warframe Algo Trader/1.2.9',
         }
         self.lastRequestTime = 0
-        self.timeBetweenRequests = 0.1
+        self.timeBetweenRequests = 0.34
 
     def waitUntilDelayEnds(self):
         if (time.time() - self.lastRequestTime) < self.timeBetweenRequests:
             time.sleep(self.lastRequestTime - time.time() + self.timeBetweenRequests)
         
-    def perform_request(self, method, link, json=None):
-        # t0 = time.time()
-        # self.waitUntilDelayEnds()
-        # self.lastRequestTime = time.time()
-
-        if method == 'GET':
-            response = self.session.get(link)
-        elif method == 'POST':
-            response = self.session.post(link, json=json)
-        elif method == 'DELETE':
-            response = self.session.delete(link)
-        elif method == 'PUT':
-            response = self.session.put(link, json=json)
-        else:
-            raise ValueError("Invalid HTTP method")
-
+    def get(self, link):
+        self.waitUntilDelayEnds()
+        self.lastRequestTime = time.time()
+        response = self.session.get(link)
         return response
 
-    def get(self, link):
-        return self.perform_request('GET', link)
-
     def post(self, link, json):
-        return self.perform_request('POST', link, json)
+        self.waitUntilDelayEnds()
+        self.lastRequestTime = time.time()
+        response = self.session.post(link, json=json)
+        return response
 
     def delete(self, link):
-        return self.perform_request('DELETE', link)
+        self.waitUntilDelayEnds()
+        self.lastRequestTime = time.time()
+        response = self.session.delete(link)
+        return response
 
     def put(self, link, json):
-        return self.perform_request('PUT', link, json)
+        self.waitUntilDelayEnds()
+        self.lastRequestTime = time.time()
+        response = self.session.put(link, json=json)
+        return response
 
 # class WarframeApi:
 #     def __init__(self):
