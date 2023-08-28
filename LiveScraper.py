@@ -10,6 +10,7 @@ import config
 import numpy as np
 import logging
 import customLogger
+import time
 
 logging.basicConfig(format='{levelname:7} {message}', style='{', level=logging.DEBUG)
 
@@ -440,6 +441,8 @@ try:
     while config.getConfigStatus("runningLiveScraper"):
         logging.debug('Loop start')
 
+        # Read inventory from database
+        t1 = time.time()
         con = sqlite3.connect('inventory.db')
 
         inventory = pd.read_sql_query("SELECT * FROM inventory", con)
@@ -447,11 +450,21 @@ try:
         inventory = inventory[inventory.get("number") > 0]
         inventoryNames = list(inventory["name"].unique())
         logging.debug("Inventory: \n".join(inventoryNames))
+        t2 = time.time()
+
+        # Get interesting items
+        t3 = time.time()
         buySellOverlap = getBuySellOverlap()
         interestingItems = list(buySellOverlap.index)
+        interestingItems += config.whitelistedItems
+        interestingItems += inventoryNames
+        interestingItems = list(set(interestingItems))
+        logging.debug("Interesting Items:\n" + ", ".join(interestingItems).replace("_", " ").title())
+        customLogger.writeTo("orderTracker.log", f"Interesting Items (Post-Whitelist):{' '.join(interestingItems)}")
+        t4 = time.time()
 
-        
-
+        # Get current orders
+        t5 = time.time()
         currentOrders = getOrders()
         myBuyOrdersDF = pd.DataFrame.from_dict(currentOrders["buy_orders"])
         if myBuyOrdersDF.shape[0] != 0:
@@ -463,31 +476,31 @@ try:
         mySellOrdersDF = pd.DataFrame.from_dict(currentOrders["sell_orders"])
         if mySellOrdersDF.shape[0] != 0:
             mySellOrdersDF["url_name"] = mySellOrdersDF.apply(lambda row : row["item"]["url_name"], axis=1)
-        
-        interestingItems += config.whitelistedItems
-        interestingItems += inventoryNames
+        t6 = time.time()
 
-        interestingItems = list(set(interestingItems))
-        
-        logging.debug("Interesting Items:\n" + ", ".join(interestingItems).replace("_", " ").title())
-        customLogger.writeTo("orderTracker.log", f"Interesting Items (Post-Whitelist):{' '.join(interestingItems)}")
-
+        # Process interesting items
         for item in interestingItems:
             if not config.getConfigStatus("runningLiveScraper"):
                 break
             
+            # Read inventory from database
+            t7 = time.time()
             con = sqlite3.connect('inventory.db')
 
             inventory = pd.read_sql_query("SELECT * FROM inventory", con)
             con.close()
             inventory = inventory[inventory.get("number") > 0]
-            #t = time.time()
+            t8 = time.time()
 
+            # Get live orders for item
+            t9 = time.time()
             liveOrderDF = getFilteredDF(item)
             if liveOrderDF.empty:
                 logging.debug("There was an error with seeing the live orders on this item.")
                 continue
+            t10 = time.time()
 
+            # Compare live orders to data
             if item not in list(buySellOverlap.index):
                 r = warframeApi.get(f"https://api.warframe.market/v1/items/{item}")
                 customLogger.writeTo("wfmAPICalls.log", f"GET:https://api.warframe.market/v1/items/{item}\tResponse:{r.status_code}")
@@ -509,17 +522,25 @@ try:
             itemID = getItemId(item)
             modRank = getItemRank(buySellOverlap, item)
 
+            t11 = time.time()
             newBuyOrderDf = compareLiveOrdersWhenBuying(item, liveOrderDF, itemStats, currentOrders, myBuyOrdersDF, itemID, modRank, inventory)
             if isinstance(newBuyOrderDf, pd.DataFrame):
                 myBuyOrdersDF = newBuyOrderDf
             compareLiveOrdersWhenSelling(item, liveOrderDF, itemStats, currentOrders, itemID, modRank, inventory)
-            
-            #compareLiveOrdersToData(item, liveOrderDF, "buy", itemStats, currentOrders, itemID, modRank, inventory)
-            #compareLiveOrdersToData(item, liveOrderDF, "sell", itemStats, currentOrders, itemID, modRank, inventory)
-            
-            #logging.debug(item)
-            #logging.debug(time.time() - t)
+            t12 = time.time()
 
+            # Log timings
+            logging.debug(f"Timings for {item}:")
+            logging.debug(f"  Read inventory: {t8 - t7:.3f}s")
+            logging.debug(f"  Get live orders: {t10 - t9:.3f}s")
+            logging.debug(f"  Compare orders: {t12 - t11:.3f}s")
+
+        # Log timings
+        logging.debug(f"Timings for loop:")
+        logging.debug(f"  Read inventory: {t2 - t1:.3f}s")
+        logging.debug(f"  Get interesting items: {t4 - t3:.3f}s")
+        logging.debug(f"  Get current orders: {t6 - t5:.3f}s")
+        logging.debug(f"  Process interesting items: {t12 - t7:.3f}s")
 except OSError as err:
     config.setConfigStatus("runningLiveScraper", False)
     logging.debug("OS error:", err)
