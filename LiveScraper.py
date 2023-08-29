@@ -46,6 +46,8 @@ def getBuySellOverlap():
     averaged_df = df.drop(["datetime", "item_id"], axis=1)
     averaged_df = averaged_df.groupby(['name', 'order_type']).mean().reset_index()
 
+    logging.debug("Number of items in search: " + str(len(averaged_df.index.unique())))
+
     # Create your connection.
     con = sqlite3.connect('inventory.db')
 
@@ -55,6 +57,7 @@ def getBuySellOverlap():
     inventoryNames = inventory["name"].unique()
 
     dfFilter = averaged_df[(((averaged_df.get("volume") > config.volumeThreshold) & (averaged_df.get("range") > config.rangeThreshold)) | (averaged_df.get("name").isin(inventoryNames))) & (averaged_df.get("order_type") == "closed")]
+    logging.debug("Number of items in search after volume and range filtering: " + str(len(dfFilter.index.unique())))
 
     dfFilter = dfFilter.sort_values(by="range", ascending=False)
     if len(dfFilter) == 0:
@@ -80,6 +83,7 @@ def getBuySellOverlap():
     else:
         dfFilter = dfFilter[((dfFilter.get("avg_price") < config.avgPriceCap) & (dfFilter.get("weekPriceShift") >= config.priceShiftThreshold)) | (dfFilter.get("name").isin(inventoryNames)) | (dfFilter.get("name").isin(config.whitelistedItems))]
     names = dfFilter["name"].unique()
+    logging.debug("Number of items in search after price shift filtering: " + str(len(names)))
 
     dfFiltered = averaged_df[averaged_df["name"].isin(names)]
 
