@@ -442,12 +442,9 @@ if r.status_code == 401:
 deleteAllOrders()
 interestingItems = list(buySellOverlap.index)
 
-interstingItems_counter = 0
-
 try:
     while config.getConfigStatus("runningLiveScraper"):
         logging.debug('Loop start')
-        interstingItems_counter += 1
 
         # Read inventory from database
         t1 = time.time()
@@ -462,9 +459,8 @@ try:
 
         # Get interesting items
         t3 = time.time()
-        if interstingItems_counter % 10 == 0 or interstingItems_counter == 1:
-            buySellOverlap = getBuySellOverlap()
-            interestingItems = list(buySellOverlap.index)
+        buySellOverlap = getBuySellOverlap()
+        interestingItems = list(buySellOverlap.index)
         interestingItems += config.whitelistedItems
         interestingItems += inventoryNames
         interestingItems = list(set(interestingItems))
@@ -488,18 +484,15 @@ try:
         t6 = time.time()
 
         # Initialize timing variables
-        read_inventory_time = 0
-        get_live_orders_time = 0
-        compare_orders_time = 0
-        total_time = 0
-
-        item_count = 0
+read_inventory_time = 0
+get_live_orders_time = 0
+compare_orders_time = 0
+total_time = 0
         # Process interesting items
         for item in interestingItems:
             if not config.getConfigStatus("runningLiveScraper"):
                 break
             
-            logging.debug(f"Item number {item_count} out of {len(interestingItems)}")
             # Read inventory from database
             t7 = time.time()
             con = sqlite3.connect('inventory.db')
@@ -508,7 +501,6 @@ try:
             con.close()
             inventory = inventory[inventory.get("number") > 0]
             t8 = time.time()
-            read_inventory_time += t8 - t7
 
             # Get live orders for item
             t9 = time.time()
@@ -517,7 +509,6 @@ try:
                 logging.debug("There was an error with seeing the live orders on this item.")
                 continue
             t10 = time.time()
-            get_live_orders_time += t10 - t9
 
             # Compare live orders to data
             if item not in list(buySellOverlap.index):
@@ -547,14 +538,12 @@ try:
                 myBuyOrdersDF = newBuyOrderDf
             compareLiveOrdersWhenSelling(item, liveOrderDF, itemStats, currentOrders, itemID, modRank, inventory)
             t12 = time.time()
-            compare_orders_time += t12 - t11
-        # Calculate total time
-        total_time = read_inventory_time + get_live_orders_time + compare_orders_time
-        # Print percentage of time spent in each area
-        logging.debug(f"Percentage of time spent in each area:")
-        logging.debug(f"  Read inventory: {read_inventory_time / total_time * 100:.2f}%")
-        logging.debug(f"  Get live orders: {get_live_orders_time / total_time * 100:.2f}%")
-        logging.debug(f"  Compare orders: {compare_orders_time / total_time * 100:.2f}%")
+
+            # Log timings
+            logging.debug(f"Timings for {item}:")
+            logging.debug(f"  Read inventory: {t8 - t7:.3f}s")
+            logging.debug(f"  Get live orders: {t10 - t9:.3f}s")
+            logging.debug(f"  Compare orders: {t12 - t11:.3f}s")
 
         # Log timings
         logging.debug(f"Timings for loop:")
@@ -562,11 +551,6 @@ try:
         logging.debug(f"  Get interesting items: {t4 - t3:.3f}s")
         logging.debug(f"  Get current orders: {t6 - t5:.3f}s")
         logging.debug(f"  Process interesting items: {t12 - t7:.3f}s")
-
-        # Iterate over the InterestingItems list and remove any items that don't have a buy order
-    for item in interestingItems.copy():
-        if item not in myBuyOrdersDF['item'].tolist():
-            interestingItems.remove(item)
 except OSError as err:
     config.setConfigStatus("runningLiveScraper", False)
     logging.debug("OS error:", err)
